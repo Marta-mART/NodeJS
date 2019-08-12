@@ -1,5 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const dboper = require('./operations');
 
 const url = 'mongodb://localhost:27017/';
 const dbname = 'conFusion';
@@ -12,33 +13,32 @@ MongoClient.connect(url, (err, client) => {
     console.log('Connected correctly to server');
 
     const db = client.db(dbname);
-    //try to access dishes collection within db
-    const collection = db.collection('dishes');
+    dboper.insertDocument(db, { name: "Vadonut", description: "test Vadonut"}, 'dishes', (result) =>  {
+        //when inseted value comes in
+        //ops - number of operaitions carried out, what has happened
+        console.log('Insert Document:\n' , result.ops);
 
-    //next operation after insert anr done in callback function inside insertOne
-    //to make sure insert was completed before deleting everything (dropCollection)
-    collection.insertOne({"name": "Uthappizza", "description": "test pizza"}, (err,result) => {
-        assert.equal(err, null);
+        dboper.findDocuments(db, 'dishes', (docs) => {
+            console.log('Found Documents:\n', docs);
+            
+            //result - of the update operations that just has happened
+          dboper.updateDocument(db, { name: "Vadonut" },
+                    { description: "Updated Test" }, "dishes",
+                    (result) => {
+                        console.log("Updated Document:\n", result.result);
 
-        console.log('After Insert:\n');
-        console.log(result.ops); //result returned - ops - how many operations successful
+                        dboper.findDocuments(db, "dishes", (docs) => {
+                            console.log("Found Updated Documents:\n", docs);
+                            
+                            db.dropCollection("dishes", (result) => {
+                                console.log("Dropped Collection: ", result);
 
-        //find everything in collection and convert it to array
-        //it takes callback function as parameter
-        //you can provide filter here f.e. name
-        collection.find({}).toArray((err,docs) => {
-            assert.equal(err, null);
+                                client.close();
+                            });
+                        });
+                    });
 
-            console.log('Found\n');
-            console.log(docs);
-
-            //remove dishes collection from db
-            db.dropCollection('dishes', (err,result) => {
-                assert.equal(err, null); //chceck if error is not null
-                client.close(); //close connection
-            });
         });
     });
-
 
 });
