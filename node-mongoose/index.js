@@ -14,14 +14,35 @@ connect.then((db) => {
     })
     .then((dish) => {
         console.log(dish);
-
-        //find all the dishes
+        
         //exec return promise and ensures evth is ok
-        return Dishes.find({}).exec();
-    })
-    .then((dishes) => {
-        console.log(dishes);
 
+        //modyfing the dish we have just inserted
+        //by updating description
+
+        //flag new: true, when update complite, 
+        //it returnes updated dish back to us
+        return Dishes.findByIdAndUpdate(dish._id, {
+            $set: {description: 'Updated test'}
+        }, { 
+            new: true
+        }).exec();
+    })
+    .then((dish) => {
+        console.log(dish);
+
+        dish.comments.push({
+            rating: 5,
+            comment: 'I love it',
+            author: 'Martin'
+        });
+
+        return dish.save();
+
+    })
+    .then((dish) => {
+
+        console.log(dish);
         //empty JS object - removes evth
         return Dishes.remove({});
     })
