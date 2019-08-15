@@ -8,6 +8,9 @@ const dishRouter = express.Router();
 
 dishRouter.use(bodyParser.json());
 
+/**
+ * Dish all api
+ */
 dishRouter.route('/')
 .get((req,res,next) => {
     Dishes.find({})
@@ -38,9 +41,8 @@ dishRouter.route('/')
     res.statusCode = 403; //server understood, but operation is forbidden
     res.end('PUT operation not supported on /dishes');
 })
-//Dangerous operation
+//Dangerous operation - remove all
 .delete((req,res,next) => {
-    //dangerous operation - remove all
    Dishes.remove({})
    .then((resp) => {
         res.statusCode = 200;   
@@ -131,7 +133,9 @@ dishRouter.route('/:dishId/comments')
     .then((dish) => { //if the dish returned correctly
          //if dish exists
          if(dish != null) {             
-            dish.comments.push(req.body); //body contains all coments 
+             //we have dish becuase find returns it
+             //so we know this object will have the comments
+            dish.comments.push(req.body); //body contains all comments 
             dish.save() //save updated dish
             .then((dish) => {
                 res.statusCode = 200;

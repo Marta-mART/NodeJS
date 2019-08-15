@@ -1,26 +1,38 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+const Leaders = require('../models/leader');
+
 const leaderRouter = express.Router();
 
 leaderRouter.use(bodyParser.json());
 
-
+/**
+ * Leader all
+ */
 leaderRouter.route('/')
-//this code exectuted first by default
-.all( (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain'); //we send client plain text
-    next(); //continue to look for specifications down below for dishes
-})
 .get((req,res,next) => {
-    res.end('Will send all the leaders to you!');
+    Leaders.find({})
+    .then((leaders) => {
+        //OK operation find completed
+        res.statusCode = 200;
+        //return value as json
+        res.setHeader('Content-Type', 'application/json');
+        res.json(leaders);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 })
 //Post new leader to server
 .post((req,res,next) => {
-    //extract info from body
-    res.end('Will add the leader: ' + req.body.name + 
-        ' with details: ' + req.body.description);
+    Leaders.create(req.body)
+    .then((leader) => { //if the leader returned correctly
+        console.log('Dish Created', leader);
+        res.statusCode = 200;
+        //return value as json
+        res.setHeader('Content-Type', 'application/json');
+        res.json(leader); //client deals with what is returned in the leader on the client side
+    },  (err) => next(err))
+    .catch((err) => next(err));
 })
 .put((req,res,next) => {
     //extract info from body
@@ -29,21 +41,27 @@ leaderRouter.route('/')
 })
 //Dangerous operation
 .delete((req,res,next) => {
-    res.end('Deleting all the leaders!');
+    Leaders.remove({})
+    .then((resp) => {
+         res.statusCode = 200;   
+         res.setHeader('Content-Type', 'application/json');
+         res.json(resp);    
+    }, (err) => next(err))
+    .catch((err) => next(err));
 });
 
 
 
 leaderRouter.route('/:leaderId')
-//this code exectuted first by default
-.all( (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain'); //we send client plain text
-    next(); //continue to look for specifications down below for dishes
-})
 .get((req,res,next) => {
-    res.end('Will send details of the leader: '
-    + req.params.leaderId +' to you!');
+    Leaders.findById(req.params.leaderId)
+    .then((leader) => { //if the leader returned correctly
+        res.statusCode = 200;
+        //return value as json
+        res.setHeader('Content-Type', 'application/json');
+        res.json(leader); //client deals with what is returned in the leader on the client side
+    },  (err) => next(err))
+    .catch((err) => next(err));
 })
 //Post new leader to server
 .post((req,res,next) => {
@@ -52,14 +70,26 @@ leaderRouter.route('/:leaderId')
         + req.params.leaderId);
 })
 .put((req,res,next) => {
-    //extract info from body
-    res.write('Updating the leader: ' + req.params.leaderId + '\n');
-  res.end('Will update the leader: ' + req.body.name + 
-        ' with details: ' + req.body.description);
+    Leaders.findByIdAndUpdate(req.params.leaderId, {
+        $set: req.body
+    }, {new: true })
+    .then((leader) => { //if the leader returned correctly
+         res.statusCode = 200;
+         //return value as json
+         res.setHeader('Content-Type', 'application/json');
+         res.json(leader); //client deals with what is returned in the leader on the client side
+     },  (err) => next(err))
+     .catch((err) => next(err));
 })
 //Dangerous operation
 .delete((req,res,next) => {
-    res.end('Deleting leader: ' + req.params.leaderId);
+    Leaders.findByIdAndRemove(req.params.leaderId)
+    .then((resp) => {
+         res.statusCode = 200;   
+         res.setHeader('Content-Type', 'application/json');
+         res.json(resp);    
+     }, (err) => next(err))
+     .catch((err) => next(err));
 });
 
 module.exports = leaderRouter;

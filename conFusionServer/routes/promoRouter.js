@@ -1,26 +1,34 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+const Promos = require('../models/promotions');
+
 const promotionRouter = express.Router();
 
 promotionRouter.use(bodyParser.json());
 
-
+/**
+ * Promotions all
+ */
 promotionRouter.route('/')
-//this code exectuted first by default
-.all( (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain'); //we send client plain text
-    next(); //continue to look for specifications down below for dishes
-})
 .get((req,res,next) => {
-    res.end('Will send all the promotions to you!');
+    Promos.find({})
+    .then((promos) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(promos);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 })
 //Post new promotion to server
 .post((req,res,next) => {
-    //extract info from body
-    res.end('Will add the promotion: ' + req.body.name + 
-        ' with details: ' + req.body.description);
+    Promos.create(req.body)
+    .then((promo) => {
+        console.log('Promotion created', promo);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(promo);
+    }, (err) => next(err))
 })
 .put((req,res,next) => {
     //extract info from body
@@ -29,21 +37,27 @@ promotionRouter.route('/')
 })
 //Dangerous operation
 .delete((req,res,next) => {
-    res.end('Deleting all the promotions!');
+    Promos.remove({})
+    .then((resp) => {
+        res.statusCode = 200;   
+        res.setHeader('Content-Type', 'application/json');
+        res.json(resp); 
+    }, (err) => next(err))
+    .catch((err) => next(err));
 });
 
 
 
 promotionRouter.route('/:promoId')
 //this code exectuted first by default
-.all( (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain'); //we send client plain text
-    next(); //continue to look for specifications down below for dishes
-})
-.get((req,res,next) => {
-    res.end('Will send details of the promotion: '
-    + req.params.promoId +' to you!');
+.get( (req, res, next) => {
+    Promos.findById(req.params.promoId)
+    .then((promo) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(promo);
+    },  (err) => next(err))
+    .catch((err) => next(err));
 })
 //Post new promotion to server
 .post((req,res,next) => {
@@ -52,14 +66,25 @@ promotionRouter.route('/:promoId')
         + req.params.promoId);
 })
 .put((req,res,next) => {
-    //extract info from body
-    res.write('Updating the promotion: ' + req.params.promoId + '\n');
-  res.end('Will update the promotion: ' + req.body.name + 
-        ' with details: ' + req.body.description);
+    Promos.findByIdAndUpdate(req.params.promoId, {
+        $set: req.body
+    }, {new: true })
+    .then((promo) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(dish);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 })
 //Dangerous operation
 .delete((req,res,next) => {
-    res.end('Deleting promotion: ' + req.params.promoId);
+    Promos.findByIdAndRemove(req.params.dishId)
+    .then((resp) => {
+         res.statusCode = 200;   
+         res.setHeader('Content-Type', 'application/json');
+         res.json(resp);    
+     }, (err) => next(err))
+     .catch((err) => next(err));
 });
 
 module.exports = promotionRouter;
