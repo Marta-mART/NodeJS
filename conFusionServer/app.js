@@ -30,40 +30,61 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+//random value set by us
+app.use(cookieParser('12345-67890-09876-54321'));
 //Auth
 
 function auth(req,res, next) {
-  console.log(req.headers);
+  console.log(req.signedCookies);
 
-  var authHeader = req.headers.authorization;
-  //Auth header doesn't exist
-  if(!authHeader) {
-    var err = new Error('You are not authenticated!');
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    return next(err);
+  //if signed cookie doesn't contain user in signed cookie
+  //we will look in autho header for user
+  if(!req.signedCookies.user) {
+    var authHeader = req.headers.authorization;
+    //Auth header doesn't exist
+    if(!authHeader) {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+
+    //split user name and password into array of two items
+    //extract from base64 string
+    //split user and password
+
+    //req.headers.authorization returned for me: Basic dXNlcm5hbWU6cGFzc3dvcmQ=. Not just the base64 string
+
+    var auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    var username = auth[0];
+    var password = auth[1];
+
+    if(username === 'admin' && password === 'password') {
+      //set cookie with value
+      res.cookie('user', 'admin', {signed: true});
+      next(); //next middleware, express try to match to specific middleware that matches request
+    }
+    else {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+  }
+  //signed cookie exists and user is defines
+  else
+  {
+    if(req.signedCookies.user === 'admin') //if signed cookie correct info
+      next();
+    else { //bad cookie with incorrect info user and password
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
   }
 
-  //split user name and password into array of two items
-  //extract from base64 string
-  //split user and password
-
-  //req.headers.authorization returned for me: Basic dXNlcm5hbWU6cGFzc3dvcmQ=. Not just the base64 string
   
-  var auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-  var username = auth[0];
-  var password = auth[1];
-
-  if(username === 'admin' && password === 'password') {
-    next(); //next middleware, express try to match to specific middleware that matches request
-  }
-  else {
-    var err = new Error('You are not authenticated!');
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    return next(err);
-  }
 }
 
 app.use(auth); //function we implement
