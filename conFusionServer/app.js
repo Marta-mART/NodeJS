@@ -31,6 +31,44 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+//Auth
+
+function auth(req,res, next) {
+  console.log(req.headers);
+
+  var authHeader = req.headers.authorization;
+  //Auth header doesn't exist
+  if(!authHeader) {
+    var err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    return next(err);
+  }
+
+  //split user name and password into array of two items
+  //extract from base64 string
+  //split user and password
+
+  //req.headers.authorization returned for me: Basic dXNlcm5hbWU6cGFzc3dvcmQ=. Not just the base64 string
+  
+  var auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  var username = auth[0];
+  var password = auth[1];
+
+  if(username === 'admin' && password === 'password') {
+    next(); //next middleware, express try to match to specific middleware that matches request
+  }
+  else {
+    var err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    return next(err);
+  }
+}
+
+app.use(auth); //function we implement
+
+//serve static data from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
