@@ -45,58 +45,34 @@ app.use(session({
   store: new FileStore()
 }));
 
-//Auth
+//user auth first
+//access index file and user endpoint without auth if logged
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
+//Auth - for other endpoints (not /user)
 function auth(req,res, next) {
   console.log(req.session);
 
   //if signed cookie doesn't contain user in signed cookie
   //we will look in autho header for user
   if(!req.session.user) {
-    var authHeader = req.headers.authorization;
-    //Auth header doesn't exist
-    if(!authHeader) {
       var err = new Error('You are not authenticated!');
       res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
+      err.status = 403;
       return next(err);
     }
-
-    //split user name and password into array of two items
-    //extract from base64 string
-    //split user and password
-
-    //req.headers.authorization returned for me: Basic dXNlcm5hbWU6cGFzc3dvcmQ=. Not just the base64 string
-
-    var auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    var username = auth[0];
-    var password = auth[1];
-
-    if(username === 'admin' && password === 'password') {
-      //set cookie with value
-      req.session.user = 'admin';
-      next(); //next middleware, express try to match to specific middleware that matches request
-    }
-    else {
-      var err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-  }
+    
   //signed cookie exists and user is defines
-  else
-  {
-    if(req.session.user === 'admin') //if signed cookie correct info
+  else  {
+    if(req.session.user === 'authenticated') //if signed cookie correct info
       next();
     else { //bad cookie with incorrect info user and password
       var err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
+      err.status = 403;
       return next(err);
     }
-  }
-
-  
+  }  
 }
 
 app.use(auth); //function we implement
@@ -104,8 +80,6 @@ app.use(auth); //function we implement
 //serve static data from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
