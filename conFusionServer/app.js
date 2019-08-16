@@ -3,6 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -31,15 +34,24 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //random value set by us
-app.use(cookieParser('12345-67890-09876-54321'));
-//Auth
+//app.use(cookieParser('12345-67890-09876-54321'));
 
+//Sesion middleware
+app.use(session({
+  name: 'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUnitialized: false,
+  resave: false,
+  store: new FileStore()
+}));
+
+//Auth
 function auth(req,res, next) {
-  console.log(req.signedCookies);
+  console.log(req.session);
 
   //if signed cookie doesn't contain user in signed cookie
   //we will look in autho header for user
-  if(!req.signedCookies.user) {
+  if(!req.session.user) {
     var authHeader = req.headers.authorization;
     //Auth header doesn't exist
     if(!authHeader) {
@@ -61,7 +73,7 @@ function auth(req,res, next) {
 
     if(username === 'admin' && password === 'password') {
       //set cookie with value
-      res.cookie('user', 'admin', {signed: true});
+      req.session.user = 'admin';
       next(); //next middleware, express try to match to specific middleware that matches request
     }
     else {
@@ -74,7 +86,7 @@ function auth(req,res, next) {
   //signed cookie exists and user is defines
   else
   {
-    if(req.signedCookies.user === 'admin') //if signed cookie correct info
+    if(req.session.user === 'admin') //if signed cookie correct info
       next();
     else { //bad cookie with incorrect info user and password
       var err = new Error('You are not authenticated!');
