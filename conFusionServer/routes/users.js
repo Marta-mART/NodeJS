@@ -1,6 +1,7 @@
 var express = require('express');
 const bodyParser = require('body-parser');
 var User = require('../models/user');
+var passport = require('passport');
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -11,93 +12,37 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/signup', (req,res, next) => {
-  User.findOne({username: req.body.username})
-  .then((user) => {
-    //if user already exists and catch error
-    if( user != null) {
-      var err = new Error('User ' + req.body.username + ' already exists');
-      err.status = 403;
-      next(err);
+  User.register(new User ({username: req.body.username}),
+    req.body.password, (err,user) => {
+    //if registration not proper
+    if(err) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.json({err:err}); //construct json obj with json obj
     }
+    //authenticate user
     else {
-      //sign up user
-      return User.create({
-        username: req.body.username,
-        password: req.body.password
-      })
+      passport.authenticate('local')(req,res, () => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        //Made up now - to send back
+        //success flag to check if registration was successful
+        res.json({success: true, status: 'Registration Successfull'});
+      });
     }
-  })
-  .then((user) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    //Made up now - to send back
-    res.json({status: 'Registration Successfull', user: user});
-  }, (err) => next(err))
-  .catch((err) => next(err));
+  });
+  
 });
 
 
-
-
-
-
-
-router.post('/login', (req,res,next) => {
-  //user not set in session
-  if(!req.session.user) {
-    var authHeader = req.headers.authorization;
-    //Auth header doesn't exist
-    if(!authHeader) {
-      var err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-
-    //split user name and password into array of two items
-    //extract from base64 string
-    //split user and password
-
-    //req.headers.authorization returned for me: Basic dXNlcm5hbWU6cGFzc3dvcmQ=. Not just the base64 string
-
-    var auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    var username = auth[0];
-    var password = auth[1];
-
-    //Check if such a user exists
-    User.findOne({username: username})
-    .then((user) => {
-      //is user found?
-      if(user === null) {
-        var err = new Error('User ' + username + ' does not exist!');
-        err.status = 403;
-        return next(err);
-      }
-      //correct password
-      else if (user.password !== password)  {
-        var err = new Error('Your password is incorrect!');
-        err.status = 403;
-        return next(err);
-      } 
-      //first arg and second should be true
-      //double check
-      else if(user.username === username && user.password === password) {
-        //set session with values
-        req.session.user = 'authenticated';
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        res.end('You are authenticated');      
-      }     
-    })
-    .catch((err) => next(err));    
-  }
-  //user set in session - logged in earlier
-  else {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('You are already authenticated!');
-
-  }
+//passport.authenticate('local') will automatically add to req ".user" property
+//and store it in the session
+router.post('/login', passport.authenticate('local'), (req,res,next) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  //Made up now - to send back
+  //success flag to check if registration was successful
+  res.json({success: true, status: 'You are logged in!'});
 });
 
 

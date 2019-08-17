@@ -5,6 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
+var passport = require('passport');
+var authenticate = require('./authenticate');
 
 
 var indexRouter = require('./routes/index');
@@ -45,6 +47,9 @@ app.use(session({
   store: new FileStore()
 }));
 
+app.use(passport.initialize());
+app.use(passport.session()); 
+
 //user auth first
 //access index file and user endpoint without auth if logged
 app.use('/', indexRouter);
@@ -52,26 +57,18 @@ app.use('/users', usersRouter);
 
 //Auth - for other endpoints (not /user)
 function auth(req,res, next) {
-  console.log(req.session);
-
-  //if signed cookie doesn't contain user in signed cookie
-  //we will look in autho header for user
-  if(!req.session.user) {
+ 
+  //if req.user is not set - authentication not done properly
+  //because passport automatically creates user in req = req.user
+  //so user must be in req instead in req.session.user
+  if(!req.user) {
       var err = new Error('You are not authenticated!');
       res.setHeader('WWW-Authenticate', 'Basic');
       err.status = 403;
       return next(err);
-    }
-    
-  //signed cookie exists and user is defines
-  else  {
-    if(req.session.user === 'authenticated') //if signed cookie correct info
-      next();
-    else { //bad cookie with incorrect info user and password
-      var err = new Error('You are not authenticated!');
-      err.status = 403;
-      return next(err);
-    }
+    }    
+  else {    
+      next();   
   }  
 }
 
