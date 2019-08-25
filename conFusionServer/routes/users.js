@@ -2,6 +2,7 @@ var express = require('express');
 const bodyParser = require('body-parser');
 var User = require('../models/user');
 var passport = require('passport');
+var authenticate = require('../authenticate');
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -38,11 +39,13 @@ router.post('/signup', (req,res, next) => {
 //passport.authenticate('local') will automatically add to req ".user" property
 //and store it in the session
 router.post('/login', passport.authenticate('local'), (req,res,next) => {
+  
+  var token = authenticate.getToken({_id: req.user._id}); //user id is enough to create json web token
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
   //Made up now - to send back
   //success flag to check if registration was successful
-  res.json({success: true, status: 'You are logged in!'});
+  res.json({success: true, token: token, status: 'You are logged in!'});
 });
 
 

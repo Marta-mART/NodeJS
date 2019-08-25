@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const mongoose = require('mongoose');
+const authenticate = require('../authenticate');
 const Promos = require('../models/promotions');
 
 const promotionRouter = express.Router();
@@ -21,7 +22,7 @@ promotionRouter.route('/')
     .catch((err) => next(err));
 })
 //Post new promotion to server
-.post((req,res,next) => {
+.post(authenticate.verifyUser, (req,res,next) => {
     Promos.create(req.body)
     .then((promo) => {
         console.log('Promotion created', promo);
@@ -30,13 +31,13 @@ promotionRouter.route('/')
         res.json(promo);
     }, (err) => next(err))
 })
-.put((req,res,next) => {
+.put(authenticate.verifyUser, (req,res,next) => {
     //extract info from body
     res.statusCode = 403; //server understood, but operation is forbidden
     res.end('PUT operation not supported on /promotions');
 })
 //Dangerous operation
-.delete((req,res,next) => {
+.delete(authenticate.verifyUser, (req,res,next) => {
     Promos.remove({})
     .then((resp) => {
         res.statusCode = 200;   
@@ -60,12 +61,12 @@ promotionRouter.route('/:promoId')
     .catch((err) => next(err));
 })
 //Post new promotion to server
-.post((req,res,next) => {
+.post(authenticate.verifyUser, (req,res,next) => {
     res.statusCode = 403;
     res.end('POST operation not supported on /promotions/'
         + req.params.promoId);
 })
-.put((req,res,next) => {
+.put(authenticate.verifyUser, (req,res,next) => {
     Promos.findByIdAndUpdate(req.params.promoId, {
         $set: req.body
     }, {new: true })
@@ -77,7 +78,7 @@ promotionRouter.route('/:promoId')
     .catch((err) => next(err));
 })
 //Dangerous operation
-.delete((req,res,next) => {
+.delete(authenticate.verifyUser, (req,res,next) => {
     Promos.findByIdAndRemove(req.params.dishId)
     .then((resp) => {
          res.statusCode = 200;   
