@@ -9,7 +9,13 @@ router.use(bodyParser.json());
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+  User.find({})
+    .then((users) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(users);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 });
 
 router.post('/signup', (req,res, next) => {
@@ -23,14 +29,28 @@ router.post('/signup', (req,res, next) => {
     }
     //authenticate user
     else {
-      passport.authenticate('local')(req,res, () => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        //Made up now - to send back
-        //success flag to check if registration was successful
-        res.json({success: true, status: 'Registration Successfull'});
+      //complete names if exist
+      if(req.body.firstname)
+        user.firstname = req.body.firstname;
+      if(req.body.lastname)
+        user.lastname = req.body.lastname;
+      user.save((err,user) => {
+        if(err)   {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.json({err:err}); //construct json obj with json obj
+          return;
+        }
+        passport.authenticate('local')(req,res, () => {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          //Made up now - to send back
+          //success flag to check if registration was successful
+          res.json({success: true, status: 'Registration Successfull'});
+        });
       });
-    }
+      
+    }//else end
   });
   
 });
