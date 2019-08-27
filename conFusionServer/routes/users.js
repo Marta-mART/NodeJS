@@ -7,8 +7,8 @@ var authenticate = require('../authenticate');
 var router = express.Router();
 router.use(bodyParser.json());
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
+/* GET users listing - only by admin. */
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function(req, res, next) {
   User.find({})
     .then((users) => {
         res.statusCode = 200;
@@ -70,7 +70,7 @@ router.post('/login', passport.authenticate('local'), (req,res,next) => {
 
 
 //get on logout - because you don't supply information
-router.get('/logout', (req,res) => {
+router.get('/logout', (req,res, next) => {
   //session must exist, because otherwise you try to log out user who is not logged in
   //that doesn't make sense
   if(req.session) {
@@ -83,5 +83,6 @@ router.get('/logout', (req,res) => {
     err.status = 403;
     next(err);
   }
-})
+});
+
 module.exports = router;
