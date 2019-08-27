@@ -28,6 +28,18 @@ connect.then((db) => {
 
 var app = express();
 
+//redirect all req comming in
+app.all('*', (req,res,next) => {
+  if(req.secure){ //if req is secure, flag will be automatically set
+    return next();
+  }
+  else {
+    //return status code 307
+    //not change req method - as in originall endpoint
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort' + req.url));
+  }
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
