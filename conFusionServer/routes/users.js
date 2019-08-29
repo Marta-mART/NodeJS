@@ -87,4 +87,15 @@ router.get('/logout', cors.corsWithOptions, (req,res, next) => {
   }
 });
 
+//auth user usign FB AOtuth autentication
+//calling passport authenticate with strategy as arg, if successful, it will upload user in request object
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req,res) => {
+  if(req.user) {
+    var token = authenticate.getToken({_id: req.user._id}); //user id is enough to create json web token
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({success: true, token: token, status: 'You are logged in by Facebook!'});
+  }
+});
+
 module.exports = router;

@@ -11,6 +11,7 @@ var User = new Schema({
         type: String,
         default: ''
     },
+    facebookId: String, //strore fb id from user
     //username and password added automatically by passport plugin
     admin: {
         type: Boolean,
