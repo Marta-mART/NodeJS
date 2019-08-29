@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const multer = require('multer');
+const cors = require('./cors');
 
 //set multer - using 
 //customize multer handle image uploads
@@ -32,25 +33,26 @@ const uploadRouter = express.Router();
 uploadRouter.use(bodyParser.json());
 
 uploadRouter.route('/')
-.get(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+.options(cors.corsWithOptions, (res,req) => { res.sendStatus(200); })
+.get(cors.cors, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
     //extract info from body
     res.statusCode = 403; //server understood, but operation is forbidden
     res.end('GET operation not supported on /imageUpload');
 })
 //upload taking care of errors
 //imageFiile is a Key
-.post(authenticate.verifyUser, authenticate.verifyAdmin, upload.single('imageFile'), (req,res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.single('imageFile'), (req,res) => {
     //only one which is available
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.json(req.file); //post back to client - path to client to know the location
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
     //extract info from body
     res.statusCode = 403; //server understood, but operation is forbidden
     res.end('PUT operation not supported on /dishes');
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
     //extract info from body
     res.statusCode = 403; //server understood, but operation is forbidden
     res.end('DELLETE operation not supported on /dishes');

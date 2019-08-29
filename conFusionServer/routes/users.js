@@ -3,12 +3,14 @@ const bodyParser = require('body-parser');
 var User = require('../models/user');
 var passport = require('passport');
 var authenticate = require('../authenticate');
+const cors = require('./cors');
+
 
 var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing - only by admin. */
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function(req, res, next) {
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function(req, res, next) {
   User.find({})
     .then((users) => {
         res.statusCode = 200;
@@ -18,7 +20,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function(req,
     .catch((err) => next(err));
 });
 
-router.post('/signup', (req,res, next) => {
+router.post('/signup', cors.corsWithOptions, (req,res, next) => {
   User.register(new User ({username: req.body.username}),
     req.body.password, (err,user) => {
     //if registration not proper
@@ -58,7 +60,7 @@ router.post('/signup', (req,res, next) => {
 
 //passport.authenticate('local') will automatically add to req ".user" property
 //and store it in the session
-router.post('/login', passport.authenticate('local'), (req,res,next) => {
+router.post('/login',cors.corsWithOptions, passport.authenticate('local'), (req,res,next) => {
   
   var token = authenticate.getToken({_id: req.user._id}); //user id is enough to create json web token
   res.statusCode = 200;
@@ -70,7 +72,7 @@ router.post('/login', passport.authenticate('local'), (req,res,next) => {
 
 
 //get on logout - because you don't supply information
-router.get('/logout', (req,res, next) => {
+router.get('/logout', cors.corsWithOptions, (req,res, next) => {
   //session must exist, because otherwise you try to log out user who is not logged in
   //that doesn't make sense
   if(req.session) {
