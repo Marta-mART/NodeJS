@@ -7,9 +7,13 @@ const Users = require('../models/user');
 const cors = require('./cors');
 
 const favouriteRouter = express.Router();
-
 favouriteRouter.use(bodyParser.json());
 
+/**
+ * This module was made for exercises purposes, don't use it with this application
+ * Mistakes: not benefit from population mongoose module
+ * It works but it is clunky
+ */
 favouriteRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 //all dishes of exact user
