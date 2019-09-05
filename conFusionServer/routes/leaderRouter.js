@@ -15,7 +15,7 @@ leaderRouter.use(bodyParser.json());
 leaderRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, (req,res,next) => {
-    Leaders.find({})
+    Leaders.find(req.query) //pass parameter f.e. ?featured=true - mapped to {featured: true}
     .then((leaders) => {
         //OK operation find completed
         res.statusCode = 200;

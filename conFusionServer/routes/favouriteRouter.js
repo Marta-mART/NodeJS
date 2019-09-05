@@ -90,12 +90,15 @@ favouriteRouter.route('/')
             .then((favourite) => {
                       
                favourite
-               .populate('user')               
+               .populate('user');               
                
-               res.statusCode = 201;
+               res.statusCode = 200;
                res.setHeader('Content-Type', 'application/json');
                res.json(favourite);
                            
+            })
+            .catch((err) => {
+               return next(err);
             });
             console.log('End save');
 
@@ -143,7 +146,7 @@ favouriteRouter.route('/')
             await Favourites.create({"user": req.user._id, "dishes": uniqueArray})
             .then((favourite) => {
                console.log("Save");
-               favourite.save()
+               favourite.save();
                favourite.populate('user')
                .then((resp) => {
                   res.statusCode = 200;
@@ -191,8 +194,34 @@ favouriteRouter.route('/:dishId')
 //chceck, if dish is already on the list - indexOf method
 //particular dish added
 .get(cors.corsWithOptions, authenticate.verifyUser, (req,res,next) => {
-   res.statusCode = 403;
-   res.end('GET operation not supported on /favorites/'+ req.params.dishId);
+   Favourites.findOne({user: req.user._id})
+   .then((favourites) => {
+      //dish we are checking for doesn't exist, because fav list doesn't exist
+      if(!favourites) {
+         res.statusCode = 200;
+         res.setHeader('Content-Type', 'application/json');
+         return res.json({"exists": false, "favourites": favourites})
+      }
+      //dish we are checking for doesn't exist on fav list
+      else {
+         //it won't work TODO
+         Dishes.find(req.params.dishId)
+         .then((dish) => {
+            if(favourites.dishes.indexOf(dish) < 0) {
+               res.statusCode = 200;
+               res.setHeader('Content-Type', 'application/json');
+               return res.json({"exists": false, "favourites": favourites})
+            }
+            //dish exists on the list
+            else {
+               res.statusCode = 200;
+               res.setHeader('Content-Type', 'application/json');
+               return res.json({"exists": true, "favourites": favourites})
+            }
+         });         
+      }
+   }, (err) => next (err))
+   .catch((err) => next(err));
 })
 .post(cors.corsWithOptions, authenticate.verifyUser, (req,res,next) => {
  
@@ -226,7 +255,7 @@ favouriteRouter.route('/:dishId')
                    favourite
                    .populate('user') //I dont't understand, why we don't populate dishes, but this way it works               
                    
-                   res.statusCode = 201;
+                   res.statusCode = 200;
                    res.setHeader('Content-Type', 'application/json');
                    res.json(favourite);
                   
@@ -292,10 +321,18 @@ favouriteRouter.route('/:dishId')
       //Remove specific dish from favourite list - remember it may end up empty - it is not a problem for us
       favourite.dishes.id(req.params.dishId).remove();
       favourite.save()
-      .then((resp) => {
+      .then((favourite) => {
+         Favourites.findById(favourite._id)
+         .populate('user')
+         .then((favorite) => {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
-            res.json(resp); 
+            res.json(favorite); 
+         })
+         .catch((err) => {
+            return next(err);
+         })
+           
       });
 
 

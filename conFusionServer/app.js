@@ -15,7 +15,7 @@ var dishRouter = require('./routes/dishRouter');
 var promoRouter = require('./routes/promoRouter');
 var leaderRouter = require('./routes/leaderRouter');
 var uploadRouter = require('./routes/uploadRouter');
-var favouriteRouter = require('./routes/favouritesRouter');
+var favouriteRouter = require('./routes/favouriteRouter');
 
 
 const mongoose = require('mongoose');

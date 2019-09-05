@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 
 //all origns server accept
-const whitelist = ['http://localhost:3000', 'https://localhost:3443'];
+const whitelist = ['http://localhost:3000', 'https://localhost:3443', 'http://Lenovo:3001'];
 var corsOptionsDelegate = (req,callback) => {
     var corsOptions;
 
